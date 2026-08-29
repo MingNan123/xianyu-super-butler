@@ -107,7 +107,7 @@ RUN apt-get update && \
         libxft2 \
         libxinerama1 \
         libxtst6 \
-        libappindicator3-1 \
+        libayatana-appindicator3-1 \
         libx11-xcb1 \
         libxfixes3 \
         xdg-utils \
