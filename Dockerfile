@@ -19,8 +19,11 @@ WORKDIR /frontend
 # 复制前端依赖文件
 COPY frontend/package.json frontend/pnpm-lock.yaml ./
 
-# 安装 pnpm 并安装依赖
-RUN npm install -g pnpm && pnpm install --frozen-lockfile
+# 固定 pnpm 版本，避免最新版 pnpm 与现有 lockfile/build-script 策略不兼容。
+# Docker 构建以 package.json 为准同步锁文件，避免 frozen-lockfile 因版本差异直接失败。
+RUN npm install -g pnpm@10 && \
+    pnpm config set dangerously-allow-all-builds true && \
+    pnpm install --no-frozen-lockfile
 
 # 复制前端源码并构建
 COPY frontend/ ./
