@@ -1,0 +1,51 @@
+services:
+  xianyu-app:
+    build:
+      context: ../..
+      dockerfile: Dockerfile
+    image: xianyu-super-butler:latest
+    container_name: xianyu-super-butler
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:${WEB_PORT:-8080}:8080"
+    volumes:
+      - ../../data:/app/data:rw
+      - ../../logs:/app/logs:rw
+      - ../../backups:/app/backups:rw
+      - ../../global_config.yml:/app/global_config.yml:ro
+    environment:
+      - PYTHONUNBUFFERED=1
+      - PYTHONDONTWRITEBYTECODE=1
+      - TZ=${TZ:-Asia/Shanghai}
+      - DB_PATH=/app/data/xianyu_data.db
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+      - DEBUG=${DEBUG:-false}
+      - RELOAD=false
+      - ADMIN_USERNAME=${ADMIN_USERNAME:-admin}
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD}
+      - JWT_SECRET_KEY=${JWT_SECRET_KEY}
+      - MULTIUSER_ENABLED=${MULTIUSER_ENABLED:-true}
+      - USER_REGISTRATION_ENABLED=${USER_REGISTRATION_ENABLED:-false}
+      - EMAIL_VERIFICATION_ENABLED=${EMAIL_VERIFICATION_ENABLED:-false}
+      - CAPTCHA_ENABLED=${CAPTCHA_ENABLED:-true}
+      - AUTO_REPLY_ENABLED=${AUTO_REPLY_ENABLED:-true}
+      - AUTO_DELIVERY_ENABLED=${AUTO_DELIVERY_ENABLED:-true}
+      - AI_REPLY_ENABLED=${AI_REPLY_ENABLED:-false}
+      - DEFAULT_AI_MODEL=${DEFAULT_AI_MODEL:-qwen-plus}
+      - DEFAULT_AI_BASE_URL=${DEFAULT_AI_BASE_URL:-https://dashscope.aliyuncs.com/compatible-mode/v1}
+      - WEBSOCKET_URL=${WEBSOCKET_URL:-wss://wss-goofish.dingtalk.com/}
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    container_name: xianyu-cloudflared
+    restart: unless-stopped
+    command: tunnel --no-autoupdate run --token ${CLOUDFLARE_TUNNEL_TOKEN}
+    depends_on:
+      xianyu-app:
+        condition: service_healthy
